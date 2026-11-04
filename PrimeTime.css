@@ -203,6 +203,7 @@
   z-index: 5; }
 
 #spamAlert {
+  display: none;
   position: absolute;
   top: 50%;
   left: 50%;
