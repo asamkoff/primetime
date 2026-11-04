@@ -9,6 +9,9 @@
 var SIMULATION_STEP_MS = 13;
 var WRONG_SHOT_PENALTY_MS = 1000;
 var NUMBER_HIT_PAUSE_MS = 150;
+var WRONG_SHOTS_FOR_SPAM_ALERT = 2;
+var SPAM_ALERT_DURATION_MS = 4000;
+var SPAM_ALERT_FLASH_INTERVAL_MS = 1000;
 
 //================================================================================
 
@@ -672,6 +675,7 @@ Number.prototype = {
     else {
       bullet.deactivate(); // bullet didn't act, so it passes on up, but is inactive (i.e. can't hit other numbers)
       bullet.penaltyOnClear = true;
+      this.game.recordWrongShot();
     }
   }
   
@@ -769,6 +773,7 @@ Boss.prototype = {
     else {
       bullet.deactivate();
       bullet.penaltyOnClear = true;
+      this.game.recordWrongShot();
     }
   }
 };
@@ -966,6 +971,10 @@ function Game (document) {
     this.numbers[i].game = this;
   }
   this.boss = new Boss(document.getElementById("boss"), this);
+  this.spamAlertElement = document.getElementById("spamAlert");
+  this.wrongShotCount = 0;
+  this.spamAlertInterval = null;
+  this.spamAlertTimeout = null;
   this.scoreText = document.getElementById ("scoreValue");
   this.highScoreText = document.getElementById ("highScore");
   this.gameOverElement = document.getElementById ("gameOver");
@@ -1009,6 +1018,16 @@ Game.prototype = {
     this.currentNumbers = 1;
     this.gameOverElement.style.display = "none";
     this.messageElement.style.display = "none";
+    this.spamAlertElement.style.display = "none";
+    this.wrongShotCount = 0;
+    if (this.spamAlertInterval !== null) {
+      window.clearInterval(this.spamAlertInterval);
+      this.spamAlertInterval = null;
+    }
+    if (this.spamAlertTimeout !== null) {
+      window.clearTimeout(this.spamAlertTimeout);
+      this.spamAlertTimeout = null;
+    }
     this.bullet.clear();
     this.bullet.penaltyUntil = 0;
     this.gun.setLoaded(true);
@@ -1231,6 +1250,36 @@ Game.prototype = {
   showMessage: function(message) {
     this.messageElement.firstChild.nodeValue = message;
     this.messageElement.style.display = "block";
+  },
+
+  recordWrongShot: function() {
+    this.wrongShotCount++;
+    if (this.wrongShotCount >= WRONG_SHOTS_FOR_SPAM_ALERT) {
+      this.wrongShotCount = 0;
+      this.showSpamAlert();
+    }
+  },
+
+  showSpamAlert: function() {
+    var game = this;
+    if (this.spamAlertInterval !== null) {
+      window.clearInterval(this.spamAlertInterval);
+    }
+    if (this.spamAlertTimeout !== null) {
+      window.clearTimeout(this.spamAlertTimeout);
+    }
+
+    this.spamAlertElement.style.display = "block";
+    this.spamAlertInterval = window.setInterval(function() {
+      game.spamAlertElement.style.display =
+        game.spamAlertElement.style.display === "none" ? "block" : "none";
+    }, SPAM_ALERT_FLASH_INTERVAL_MS);
+    this.spamAlertTimeout = window.setTimeout(function() {
+      window.clearInterval(game.spamAlertInterval);
+      game.spamAlertInterval = null;
+      game.spamAlertTimeout = null;
+      game.spamAlertElement.style.display = "none";
+    }, SPAM_ALERT_DURATION_MS);
   },
   
   /** Clear the message */

@@ -202,6 +202,29 @@
   color: #0020ff;
   z-index: 5; }
 
+#spamAlert {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  text-align: center;
+  font-size: 30px;
+  font-family: Arial,sans-serif;
+  font-weight: bold;
+  background-color: #fff0f0;
+  border: 2px solid #e02020;
+  padding: 10px;
+  color: #e02020;
+  z-index: 6;
+}
+
+#spamAlert img {
+  width: 72px;
+  height: auto;
+  vertical-align: middle;
+}
+
 #gameOverText {
   /* Message about game over */
   margin: 0 0 10px 0; }
