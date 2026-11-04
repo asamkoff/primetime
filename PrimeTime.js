@@ -1018,7 +1018,7 @@ Game.prototype = {
     this.currentNumbers = 1;
     this.gameOverElement.style.display = "none";
     this.messageElement.style.display = "none";
-    this.spamAlertElement.style.display = "none";
+    this.spamAlertElement.hidden = true;
     this.wrongShotCount = 0;
     if (this.spamAlertInterval !== null) {
       window.clearInterval(this.spamAlertInterval);
@@ -1269,16 +1269,15 @@ Game.prototype = {
       window.clearTimeout(this.spamAlertTimeout);
     }
 
-    this.spamAlertElement.style.display = "block";
+    this.spamAlertElement.hidden = false;
     this.spamAlertInterval = window.setInterval(function() {
-      game.spamAlertElement.style.display =
-        game.spamAlertElement.style.display === "none" ? "block" : "none";
+      game.spamAlertElement.hidden = !game.spamAlertElement.hidden;
     }, SPAM_ALERT_FLASH_INTERVAL_MS);
     this.spamAlertTimeout = window.setTimeout(function() {
       window.clearInterval(game.spamAlertInterval);
       game.spamAlertInterval = null;
       game.spamAlertTimeout = null;
-      game.spamAlertElement.style.display = "none";
+      game.spamAlertElement.hidden = true;
     }, SPAM_ALERT_DURATION_MS);
   },
   

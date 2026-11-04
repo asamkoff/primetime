@@ -1,7 +1,7 @@
-/* Copyright 2006 Philip Dorrell.
+/* 
+   Based on the PrimeShooter game by Philip Dorrell, 2006.
    This style sheet is part of the PrimeShooter game which is 
    licensed under the General Public License version 2,
-   a copy of which may be found at http://thinkinghard.com/math/integers/gnu-general-public-license.txt
 */
 #game {
   /* Main game area */
@@ -203,7 +203,6 @@
   z-index: 5; }
 
 #spamAlert {
-  display: none;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -218,6 +217,10 @@
   padding: 10px;
   color: #e02020;
   z-index: 6;
+}
+
+#spamAlert[hidden] {
+  display: none;
 }
 
 #spamAlert img {
