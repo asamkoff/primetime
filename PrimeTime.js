@@ -661,6 +661,7 @@ Number.prototype = {
       this.value = result;
       this.view.firstChild.nodeValue = "" + result;
       this.hitPauseUntil = Date.now() + NUMBER_HIT_PAUSE_MS;
+      this.game.shootingSound.playImpact();
       bullet.clear(); // clear bullet so gun is ready to fire new bullet
       if (result ==1) { // Number reduced to 1, so it has "died"
         this.game.addScore(1);
@@ -757,6 +758,7 @@ Boss.prototype = {
     if (result) {
       this.value = result;
       this.view.firstChild.nodeValue = "" + result;
+      this.game.shootingSound.playImpact();
       bullet.clear();
       if (result === 1) {
         this.game.addScore(1);
@@ -880,6 +882,48 @@ ShootingSound.prototype = {
     else {
       this.playTone(settings);
     }
+  },
+
+  playImpact: function() {
+    if (!this.audioContextConstructor) return;
+    if (!this.audioContext) {
+      this.audioContext = new this.audioContextConstructor();
+    }
+
+    var sound = this;
+    if (this.audioContext.state === "suspended") {
+      this.audioContext.resume().then(function() {
+        sound.playClick();
+      }, function(error) {
+        console.error("Could not start impact sound:", error);
+      });
+    }
+    else {
+      this.playClick();
+    }
+  },
+
+  playClick: function() {
+    var now = this.audioContext.currentTime;
+    var duration = 0.035;
+    var oscillator = this.audioContext.createOscillator();
+    var gain = this.audioContext.createGain();
+
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(1800, now);
+    oscillator.frequency.exponentialRampToValueAtTime(700, now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    oscillator.connect(gain);
+    gain.connect(this.audioContext.destination);
+    oscillator.onended = function() {
+      oscillator.disconnect();
+      gain.disconnect();
+    };
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.01);
   },
 
   playTone: function(settings) {
