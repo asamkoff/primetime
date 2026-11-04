@@ -95,7 +95,18 @@ Bullet.prototype = {
       this.penaltyUntil = Date.now() + WRONG_SHOT_PENALTY_MS;
       this.penaltyOnClear = false;
     }
-    this.gun.setLoaded (true);
+    this.updatePenalty();
+    if (!this.penaltyUntil) this.gun.setLoaded(true);
+  },
+
+  updatePenalty: function() {
+    if (this.penaltyUntil > Date.now()) {
+      this.gun.setLoaded(false);
+    }
+    else if (this.penaltyUntil) {
+      this.penaltyUntil = 0;
+      this.gun.setLoaded(true);
+    }
   },
   
   /** Set the bullet in motion (after choosing bullet type) */
@@ -949,6 +960,7 @@ Game.prototype = {
     this.messageElement.style.display = "none";
     this.bullet.clear();
     this.bullet.penaltyUntil = 0;
+    this.gun.setLoaded(true);
     this.score = 0; //0; comment for starting with a high score for testing
     this.difficultyLevel = difficultyLevelForScore(this.score);
     try {
@@ -1115,6 +1127,7 @@ Game.prototype = {
       }
     } 
     else { // update the game components
+      this.bullet.updatePenalty();
       this.gun.update();
       this.bullet.update();
       for (var i=0; i<this.currentNumbers; i++) {
@@ -1141,7 +1154,8 @@ Game.prototype = {
         if (killer === game.boss) game.startNextBoss();
         game.bullet.clear(); // clear any current bullet
         game.spareGuns.removeGun(); // use up a spare gun
-        game.gun.setLoaded(); // ready to carry on shooting
+        if (game.bullet.penaltyUntil) game.bullet.updatePenalty();
+        else game.gun.setLoaded(true);
       });
     }
   },
