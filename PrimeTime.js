@@ -8,6 +8,7 @@
 //================================================================================
 var SIMULATION_STEP_MS = 13;
 var WRONG_SHOT_PENALTY_MS = 1000;
+var NUMBER_HIT_PAUSE_MS = 150;
 
 //================================================================================
 
@@ -592,6 +593,7 @@ Number.prototype = {
       this.veryActive = false;
       this.view.style.backgroundColor = this.activeColor;
       this.timeToDie = null;
+      this.hitPauseUntil = 0;
       this.value = randomNumberForDifficulty(
         this.maxValue,
         this.game.difficultyLevel.divisorSets
@@ -610,14 +612,18 @@ Number.prototype = {
           this.deactivate();
         }
       }
-      else if (this.Y < this.height && this.veryActive) { // super-active hits bottom: kills gun
-        this.game.gunDied("Super-activated " + this.value + " hit the bottom", this);
-      }
       else { // active Number descends
-        this.Y -= this.step;
-        if (this.Y < 0) { 
-          this.Y = this.maxPos;
-          if (withProbability (0.5)) this.setVeryActive(); // might go super-active if coming down from top
+        if (this.hitPauseUntil <= Date.now()) {
+          this.hitPauseUntil = 0;
+          if (this.Y < this.height && this.veryActive) { // super-active hits bottom: kills gun
+            this.game.gunDied("Super-activated " + this.value + " hit the bottom", this);
+            return;
+          }
+          this.Y -= this.step;
+          if (this.Y < 0) {
+            this.Y = this.maxPos;
+            if (withProbability (0.5)) this.setVeryActive(); // might go super-active if coming down from top
+          }
         }
         setYPos (this.view, this.Y);
         if (bullet.collidedWithNumber (this)) { // see if bullet could have collided with it
@@ -654,6 +660,7 @@ Number.prototype = {
     if (result) { // the bullet does act on this Number
       this.value = result;
       this.view.firstChild.nodeValue = "" + result;
+      this.hitPauseUntil = Date.now() + NUMBER_HIT_PAUSE_MS;
       bullet.clear(); // clear bullet so gun is ready to fire new bullet
       if (result ==1) { // Number reduced to 1, so it has "died"
         this.game.addScore(1);
