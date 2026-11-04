@@ -7,6 +7,7 @@
 
 //================================================================================
 var SIMULATION_STEP_MS = 13;
+var WRONG_SHOT_PENALTY_MS = 1000;
 
 //================================================================================
 
@@ -76,6 +77,8 @@ function Bullet (view, gun) {
   view.model = this;
   this.gun = gun;
   this.targetsHit = null;
+  this.penaltyUntil = 0;
+  this.penaltyOnClear = false;
 }
 
 Bullet.prototype = {
@@ -88,11 +91,16 @@ Bullet.prototype = {
   clear: function() { 
     this.active = false;
     this.view.style.visibility = "hidden";
+    if (this.penaltyOnClear) {
+      this.penaltyUntil = Date.now() + WRONG_SHOT_PENALTY_MS;
+      this.penaltyOnClear = false;
+    }
     this.gun.setLoaded (true);
   },
   
   /** Set the bullet in motion (after choosing bullet type) */
   restart: function() {
+    this.penaltyOnClear = false;
     this.X = this.gun.pos; 
     this.Y = 60;
     this.enabled = true;
@@ -644,6 +652,7 @@ Number.prototype = {
     }
     else {
       bullet.deactivate(); // bullet didn't act, so it passes on up, but is inactive (i.e. can't hit other numbers)
+      bullet.penaltyOnClear = true;
     }
   }
   
@@ -739,6 +748,7 @@ Boss.prototype = {
     }
     else {
       bullet.deactivate();
+      bullet.penaltyOnClear = true;
     }
   }
 };
@@ -938,6 +948,7 @@ Game.prototype = {
     this.gameOverElement.style.display = "none";
     this.messageElement.style.display = "none";
     this.bullet.clear();
+    this.bullet.penaltyUntil = 0;
     this.score = 0; //0; comment for starting with a high score for testing
     this.difficultyLevel = difficultyLevelForScore(this.score);
     try {
@@ -1039,7 +1050,7 @@ Game.prototype = {
   /** Response to key press, either a prime bullet or a "P" bullet, or none */
   keyPress: function (key) {
     if (this.suspended) { return false; }
-    if (!this.bullet.active) {
+    if (!this.bullet.active && Date.now() >= this.bullet.penaltyUntil) {
       key = key.toLowerCase();
       var prime = this.primesForKeys[key];
       if (prime) {
