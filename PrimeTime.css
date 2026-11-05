@@ -65,6 +65,13 @@
   top: 450px;
   left: 350px; }
 
+#gun.cat-transformed {
+  border-color: transparent;
+  background: transparent !important;
+  font-size: 36px;
+  line-height: 40px;
+}
+
 #hamburger {
   position: absolute;
   top: 0;
@@ -74,6 +81,14 @@
 }
 
 #horse {
+  position: absolute;
+  top: 0;
+  display: none;
+  font-size: 32px;
+  line-height: 1;
+}
+
+#catPowerup {
   position: absolute;
   top: 0;
   display: none;
@@ -110,6 +125,10 @@
   font-family: Arial,sans-serif;
   font-weight: bold;
   z-index: 1; }
+
+#bullet.rainbow-bullet {
+  font-size: 24px;
+}
 
 .number {
   /* The "Number"s which attack the user and must be shot */

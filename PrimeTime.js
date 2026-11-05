@@ -12,6 +12,7 @@ var NUMBER_HIT_PAUSE_MS = 500;
 var WRONG_SHOTS_FOR_SPAM_ALERT = 2;
 var SPAM_ALERT_DURATION_MS = 6000;
 var SPAM_ALERT_FLASH_INTERVAL_MS = 1000;
+var CAT_TRANSFORMATION_DURATION_MS = 6000;
 
 //================================================================================
 
@@ -139,6 +140,8 @@ Bullet.prototype = {
     //console.log("fire bullet " + n + " ...");
     this.prime = n;
     this.isPrime = false;
+    this.isRainbow = false;
+    this.view.classList.remove("rainbow-bullet");
     this.view.firstChild.nodeValue="" + n;
     this.restart();
   },
@@ -147,7 +150,17 @@ Bullet.prototype = {
   firePrime: function() {
     //console.log("fire PRIME bullet ...");
     this.isPrime = true;
+    this.isRainbow = false;
+    this.view.classList.remove("rainbow-bullet");
     this.view.firstChild.nodeValue="P";
+    this.restart();
+  },
+
+  fireRainbow: function() {
+    this.isPrime = false;
+    this.isRainbow = true;
+    this.view.textContent = "\uD83C\uDF08";
+    this.view.classList.add("rainbow-bullet");
     this.restart();
   },
   
@@ -171,7 +184,10 @@ Bullet.prototype = {
   
   /** Does this bullet act on the given target value? */
   actsOn: function (value) {
-    if (this.isPrime) {
+    if (this.isRainbow) {
+      return 1;
+    }
+    else if (this.isPrime) {
       return isPrime[value] ? 1 : null;
     }
     else {
@@ -276,7 +292,14 @@ Gun.prototype = {
     this.goingRight = false;
     this.goingLeft = false;
     this.joystickInput = null;
+    this.view.classList.remove("cat-transformed");
+    this.view.textContent = "\u00a0";
     this.view.style.backgroundColor = this.loadedColor;
+  },
+
+  setCatTransformed: function(transformed) {
+    this.view.classList.toggle("cat-transformed", transformed);
+    this.view.textContent = transformed ? "\uD83D\uDC31" : "\u00a0";
   }
 };
 
@@ -382,6 +405,65 @@ Hamburger.prototype = {
           console.error("Could not play chomp sound:", error);
         });
       }
+      this.hide();
+    }
+  }
+};
+
+function CatPowerup(view, game) {
+  this.view = view;
+  this.game = game;
+  this.timer = null;
+  this.active = false;
+}
+
+CatPowerup.prototype = {
+  step: 2,
+
+  start: function() {
+    if (this.timer !== null) return;
+    var catPowerup = this;
+    var delay = 16000 + Math.random() * 5000;
+    this.timer = window.setTimeout(function() {
+      catPowerup.timer = null;
+      catPowerup.spawn();
+      catPowerup.start();
+    }, delay);
+  },
+
+  stop: function() {
+    if (this.timer !== null) {
+      window.clearTimeout(this.timer);
+      this.timer = null;
+    }
+    this.hide();
+  },
+
+  spawn: function() {
+    this.active = true;
+    this.Y = 540;
+    setLeft(this.view, Math.floor(Math.random() * 760));
+    setYPos(this.view, this.Y);
+    this.view.style.display = "block";
+  },
+
+  hide: function() {
+    this.active = false;
+    this.view.style.display = "none";
+  },
+
+  update: function() {
+    if (!this.active || this.game.suspended) return;
+
+    this.Y -= this.step;
+    if (this.Y < 0) {
+      this.hide();
+      return;
+    }
+    setYPos(this.view, this.Y);
+
+    if (collided(this.view, this.game.gun.view)) {
+      this.game.activateCatTransformation();
       this.hide();
     }
   }
@@ -991,6 +1073,7 @@ function Game (document) {
   
   this.spareGuns = new SpareGuns (document.getElementById ("spareGuns"));
   this.hamburger = new Hamburger(document.getElementById("hamburger"), this);
+  this.catPowerup = new CatPowerup(document.getElementById("catPowerup"), this);
   this.horse = new Horse(document.getElementById("horse"), this);
   
   this.init();
@@ -1014,6 +1097,9 @@ Game.prototype = {
   /** Initialise game */
   init: function() {
     this.bossQueue = 0;
+    this.catTransformationUntil = 0;
+    this.gun.setCatTransformed(false);
+    this.catPowerup.hide();
     this.bossSpawnCount = 0;
     this.nextBossScore = 25;
     this.boss.init();
@@ -1132,6 +1218,18 @@ Game.prototype = {
       this.boss.start();
     }
   },
+
+  activateCatTransformation: function() {
+    this.catTransformationUntil = Date.now() + CAT_TRANSFORMATION_DURATION_MS;
+    this.gun.setCatTransformed(true);
+  },
+
+  updateCatTransformation: function() {
+    if (this.catTransformationUntil && Date.now() >= this.catTransformationUntil) {
+      this.catTransformationUntil = 0;
+      this.gun.setCatTransformed(false);
+    }
+  },
   
   /** Response to key press, either a prime bullet or a "P" bullet, or none */
   keyPress: function (key) {
@@ -1139,7 +1237,11 @@ Game.prototype = {
     if (!this.bullet.active && Date.now() >= this.bullet.penaltyUntil) {
       key = key.toLowerCase();
       var prime = this.primesForKeys[key];
-      if (prime) {
+      if ((prime || key == "p") && this.catTransformationUntil > Date.now()) {
+        this.bullet.fireRainbow();
+        this.shootingSound.play("default");
+      }
+      else if (prime) {
         this.bullet.fire (prime);
         this.shootingSound.play(key);
       }
@@ -1191,7 +1293,9 @@ Game.prototype = {
   /** Update for one game loop */
   update: function() {
     this.hamburger.update();
+    this.catPowerup.update();
     this.horse.update();
+    this.updateCatTransformation();
     if (this.suspended) {
       this.suspendCount--; // count down until suspension finishes
       if (this.suspendCount <= 0) {
@@ -1317,6 +1421,7 @@ GameController.prototype = {
     this.game.clearGameOver();
     this.game.restart();
     this.game.hamburger.start();
+    this.game.catPowerup.start();
     this.game.horse.start();
     this.finished = false;
     this.startLoop();
@@ -1362,6 +1467,7 @@ GameController.prototype = {
     var controller = this;
     game.controller = controller;
     game.hamburger.start();
+    game.catPowerup.start();
     game.horse.start();
     
     this.document.addEventListener("keydown", function(event) {
@@ -1397,6 +1503,7 @@ GameController.prototype = {
   finishGame: function() {
     this.finished = true;
     this.game.hamburger.stop();
+    this.game.catPowerup.stop();
     this.game.horse.stop();
     if (this.frameHandle !== null) {
       cancelAnimationFrame(this.frameHandle);
