@@ -10,7 +10,7 @@ var SIMULATION_STEP_MS = 13;
 var WRONG_SHOT_PENALTY_MS = 1000;
 var NUMBER_HIT_PAUSE_MS = 150;
 var WRONG_SHOTS_FOR_SPAM_ALERT = 2;
-var SPAM_ALERT_DURATION_MS = 4000;
+var SPAM_ALERT_DURATION_MS = 6000;
 var SPAM_ALERT_FLASH_INTERVAL_MS = 1000;
 
 //================================================================================
@@ -972,6 +972,8 @@ function Game (document) {
   }
   this.boss = new Boss(document.getElementById("boss"), this);
   this.spamAlertElement = document.getElementById("spamAlert");
+  this.alertSound = new Audio("sounds/warning.mp3");
+  this.alertSound.preload = "auto";
   this.wrongShotCount = 0;
   this.spamAlertInterval = null;
   this.spamAlertTimeout = null;
@@ -1019,6 +1021,8 @@ Game.prototype = {
     this.gameOverElement.style.display = "none";
     this.messageElement.style.display = "none";
     this.spamAlertElement.hidden = true;
+    this.alertSound.pause();
+    this.alertSound.currentTime = 0;
     this.wrongShotCount = 0;
     if (this.spamAlertInterval !== null) {
       window.clearInterval(this.spamAlertInterval);
@@ -1267,6 +1271,13 @@ Game.prototype = {
     }
     if (this.spamAlertTimeout !== null) {
       window.clearTimeout(this.spamAlertTimeout);
+    }
+    this.alertSound.currentTime = 0;
+    var playPromise = this.alertSound.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(function(error) {
+        console.error("Could not play alert sound:", error);
+      });
     }
 
     this.spamAlertElement.hidden = false;
