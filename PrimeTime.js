@@ -10,6 +10,7 @@ var SIMULATION_STEP_MS = 13;
 var WRONG_SHOT_PENALTY_MS = 1000;
 var NUMBER_HIT_PAUSE_MS = 500;
 var WRONG_SHOTS_FOR_SPAM_ALERT = 2;
+var SPAM_COUNTER_RESET_INTERVAL_MS = 6000;
 var SPAM_ALERT_DURATION_MS = 6000;
 var SPAM_ALERT_FLASH_INTERVAL_MS = 1000;
 var CAT_TRANSFORMATION_DURATION_MS = 6000;
@@ -423,7 +424,7 @@ CatPowerup.prototype = {
   start: function() {
     if (this.timer !== null) return;
     var catPowerup = this;
-    var delay = 16000 + Math.random() * 5000;
+    var delay = 22000 + Math.random() * 4000;
     this.timer = window.setTimeout(function() {
       catPowerup.timer = null;
       catPowerup.spawn();
@@ -1055,6 +1056,7 @@ function Game (document) {
   this.boss = new Boss(document.getElementById("boss"), this);
   this.spamAlertElement = document.getElementById("spamAlert");
   this.alertSound = new Audio("sounds/warning.mp3");
+  this.alertSound.volume = 0.5;
   this.alertSound.preload = "auto";
   this.wrongShotCount = 0;
   this.spamAlertInterval = null;
@@ -1069,6 +1071,11 @@ function Game (document) {
   this.timezone = document.getElementById ("timezone");
   this.noLocalStorageElement = document.getElementById("noLocalStorage");
   var game = this;
+  window.setInterval(function() {
+    if (game.wrongShotCount > 0) {
+      game.wrongShotCount = 0;
+    }
+  }, SPAM_COUNTER_RESET_INTERVAL_MS);
   this.startNewButton.onclick = function() { if (game.controller.finished) game.controller.restart(); }
   
   this.spareGuns = new SpareGuns (document.getElementById ("spareGuns"));
