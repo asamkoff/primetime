@@ -325,7 +325,7 @@ function Hamburger (view, game) {
   this.game = game;
   this.timer = null;
   this.active = false;
-  this.chompSound = new Audio("chomp.mp3");
+  this.chompSound = new Audio("sounds/chomp.mp3");
 }
 
 Hamburger.prototype = {
@@ -395,8 +395,8 @@ function Horse (view, game) {
   this.game = game;
   this.timer = null;
   this.active = false;
-  this.neighSound = new Audio("dragon-studio-horse-neigh-390297.mp3");
-  this.gallopingSound = new Audio("dragon-studio-horse-galloping-339737.mp3");
+  this.neighSound = new Audio("sounds/dragon-studio-horse-neigh-390297.mp3");
+  this.gallopingSound = new Audio("sounds/dragon-studio-horse-galloping-339737.mp3");
   this.gallopingSound.preload = "auto";
   this.audioContext = null;
   this.audioContextConstructor = window.AudioContext || window.webkitAudioContext;
