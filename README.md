@@ -1,5 +1,8 @@
 # PrimeTime
 
+## Gameplay
+Shoot primes at the falling numbers to factor them into oblivion!
+
 ## Power-ups
 
 Collect the falling cat to transform the gun and fire rainbow shots that
