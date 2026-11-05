@@ -8,7 +8,7 @@
 //================================================================================
 var SIMULATION_STEP_MS = 13;
 var WRONG_SHOT_PENALTY_MS = 1000;
-var NUMBER_HIT_PAUSE_MS = 150;
+var NUMBER_HIT_PAUSE_MS = 500;
 var WRONG_SHOTS_FOR_SPAM_ALERT = 2;
 var SPAM_ALERT_DURATION_MS = 6000;
 var SPAM_ALERT_FLASH_INTERVAL_MS = 1000;
