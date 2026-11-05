@@ -841,7 +841,7 @@ Boss.prototype = {
   },
 
   isHitByBullet: function(bullet) {
-    var result = bullet.actsOn(this.value);
+    var result = bullet.isRainbow ? null : bullet.actsOn(this.value);
     if (result) {
       this.value = result;
       this.view.firstChild.nodeValue = "" + result;
