@@ -756,8 +756,10 @@ Number.prototype = {
       }
     }
     else {
+      this.game.shootingSound.play("notDivisible");
       bullet.deactivate(); // bullet didn't act, so it passes on up, but is inactive (i.e. can't hit other numbers)
       bullet.penaltyOnClear = true;
+      
       this.game.recordWrongShot();
     }
   }
@@ -854,6 +856,7 @@ Boss.prototype = {
       }
     }
     else {
+      this.game.shootingSound.play("notDivisible");
       bullet.deactivate();
       bullet.penaltyOnClear = true;
       this.game.recordWrongShot();
@@ -938,8 +941,11 @@ var shootingSoundSettings = {
   "2": { frequency: 700, endFrequency: 180, duration: 180, fadeInTime: 8, waveform: "triangle" },
   "3": { frequency: 1200, endFrequency: 400, duration: 180, fadeInTime: 8, waveform: "triangle" },
   "5": { frequency: 400, endFrequency: 100, duration: 180, fadeInTime: 8, waveform: "triangle" },
+  notDivisible: { frequency: 700, endFrequency: 180, duration: 350, fadeInTime: 0, waveform: "sine" },
   default: { frequency: 700, endFrequency: 180, duration: 180, fadeInTime: 8, waveform: "triangle" }
 };
+
+
 
 /** Sound effect synthesizer for the player's shots. */
 function ShootingSound(settings) {
@@ -980,6 +986,7 @@ ShootingSound.prototype = {
 
     var sound = this;
     if (this.audioContext.state === "suspended") {
+      
       this.audioContext.resume().then(function() {
         sound.playClick();
       }, function(error) {
@@ -1028,7 +1035,12 @@ ShootingSound.prototype = {
       endTime
     );
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.2, now + settings.fadeInTime / 1000);
+    if (settings.fadeInTime === 0) {
+      gain.gain.setValueAtTime(0.2, now);
+    }
+    else {
+      gain.gain.linearRampToValueAtTime(0.2, now + settings.fadeInTime / 1000);
+    }
     gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
     oscillator.connect(gain);
