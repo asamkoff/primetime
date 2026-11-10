@@ -3,6 +3,11 @@
 ## Gameplay
 Shoot primes at the falling numbers to factor them into oblivion!
 
+On phones and tablets in landscape orientation, use the left and right buttons
+to move and drag the joystick toward 2 (west), 3 (north), 5 (east), or 7
+(south) to fire. Holding a direction keeps firing; return the joystick to the
+center to stop.
+
 ## Power-ups
 
 Collect the falling cat to transform the gun and fire rainbow shots that

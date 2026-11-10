@@ -51,7 +51,7 @@
 }
 
 .move-control,
-.shoot-control {
+.prime-joystick {
   display: none;
 }
 
@@ -275,7 +275,8 @@ form.inline {
   margin: 0.2em;
   border: solid 3pt black; }
 
-@media screen and (orientation: landscape) and (max-height: 700px) {
+@media screen and (orientation: landscape) and (max-height: 700px),
+  screen and (orientation: landscape) and (pointer: coarse) {
   body {
     margin: 0;
     overflow: hidden;
@@ -330,6 +331,10 @@ form.inline {
     border-radius: 8px;
   }
 
+  .game-layout > .thumb-buffer:last-child {
+    justify-content: flex-end;
+  }
+
  /* 24 pixel adjustment from the bottom of the screen. */
   .move-control {
     position: absolute;
@@ -358,27 +363,67 @@ form.inline {
     background: #ddd;
   }
 
-  .shoot-control {
+  .prime-joystick {
+    position: relative;
+    display: block;
+    flex: 0 0 min(108px, calc(100% - 8px));
+    width: min(108px, calc(100% - 8px));
+    aspect-ratio: 1;
+    align-self: center;
     box-sizing: border-box;
-    min-height: 52px;
     border: 2px solid #777;
-    border-radius: 12px;
-    background: #fff;
-    color: #111;
-    font: bold 28px Arial, sans-serif;
+    border-radius: 50%;
+    background: #e4e4e4;
     touch-action: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
 
-  .shoot-control {
-    display: block;
-    flex: 0 0 64px;
-    min-height: 0;
+  .joystick-direction {
+    position: absolute;
+    color: #333;
+    font: bold 16px Arial, sans-serif;
+    line-height: 1;
+    pointer-events: none;
   }
 
-  .shoot-control:active {
-    background: #ddd;
+  .joystick-west {
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+  }
+
+  .joystick-north {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .joystick-east {
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+  }
+
+  .joystick-south {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .joystick-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    border: 2px solid #555;
+    border-radius: 50%;
+    box-sizing: border-box;
+    background: #fff;
+    box-shadow: 0 1px 3px #0006;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
   }
 }
 

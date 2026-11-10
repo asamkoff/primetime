@@ -1545,12 +1545,14 @@ function resizeGame() {
 function setupTouchControls(game) {
   var leftButton = document.getElementById("moveLeft");
   var rightButton = document.getElementById("moveRight");
-  var shootButton = document.getElementById("shootTwo");
-  var shootThreeButton = document.getElementById("shootThree");
-  var shootFiveButton = document.getElementById("shootFive");
+  var joystick = document.getElementById("primeJoystick");
+  var joystickHandle = document.getElementById("primeJoystickHandle");
   var leftPointerId = null;
   var rightPointerId = null;
   var currentDirection = null;
+  var shootDirection = null;
+  var shootInterval = null;
+  var joystickPointerId = null;
 
   function setMovement(direction) {
     if (direction === "left") game.gun.setGoingLeft();
@@ -1593,16 +1595,72 @@ function setupTouchControls(game) {
 
   setupMoveButton(leftButton, true);
   setupMoveButton(rightButton, false);
-  function setupShootButton(button, key) {
-    button.addEventListener("pointerdown", function(event) {
-      event.preventDefault();
-      game.keyPress(key);
-    });
+
+  function updateJoystick(event) {
+    var bounds = joystick.getBoundingClientRect();
+    var centerX = bounds.left + bounds.width / 2;
+    var centerY = bounds.top + bounds.height / 2;
+    var deltaX = event.clientX - centerX;
+    var deltaY = event.clientY - centerY;
+    var maxRadius = Math.min(bounds.width, bounds.height) / 2 - 20;
+    var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    var scale = distance > maxRadius ? maxRadius / distance : 1;
+    var direction = null;
+
+    joystickHandle.style.left = "calc(50% + " + deltaX * scale + "px)";
+    joystickHandle.style.top = "calc(50% + " + deltaY * scale + "px)";
+
+    if (distance > maxRadius * 0.3) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        direction = deltaX < 0 ? "2" : "5";
+      }
+      else {
+        direction = deltaY < 0 ? "3" : "7";
+      }
+    }
+
+    if (direction !== shootDirection) {
+      shootDirection = direction;
+      if (shootDirection) game.keyPress(shootDirection);
+    }
   }
 
-  setupShootButton(shootButton, "2");
-  setupShootButton(shootThreeButton, "3");
-  setupShootButton(shootFiveButton, "5");
+  function resetJoystick() {
+    joystickPointerId = null;
+    shootDirection = null;
+    joystickHandle.style.left = "50%";
+    joystickHandle.style.top = "50%";
+    if (shootInterval !== null) {
+      window.clearInterval(shootInterval);
+      shootInterval = null;
+    }
+  }
+
+  joystick.addEventListener("pointerdown", function(event) {
+    if (joystickPointerId !== null) return;
+    event.preventDefault();
+    joystickPointerId = event.pointerId;
+    joystick.setPointerCapture(joystickPointerId);
+    updateJoystick(event);
+    shootInterval = window.setInterval(function() {
+      if (shootDirection) game.keyPress(shootDirection);
+    }, 50);
+  });
+
+  joystick.addEventListener("pointermove", function(event) {
+    if (event.pointerId !== joystickPointerId) return;
+    event.preventDefault();
+    updateJoystick(event);
+  });
+
+  function endJoystick(event) {
+    if (event.pointerId !== joystickPointerId) return;
+    resetJoystick();
+  }
+
+  joystick.addEventListener("pointerup", endJoystick);
+  joystick.addEventListener("pointercancel", endJoystick);
+  joystick.addEventListener("lostpointercapture", endJoystick);
 }
 
 function setup(numGuns) {
