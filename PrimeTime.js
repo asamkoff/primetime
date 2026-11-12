@@ -921,8 +921,8 @@ function randomNumberForDifficulty(maxValue, divisorSets) {
 var difficultyLevels = [
   { minScore: 0, maxScore: 5, divisorSets: [[2]] },
   { minScore: 6, maxScore: 10, divisorSets: [[2, 5]] },
-  { minScore: 11, maxScore: 20, divisorSets: [[2, 3, 5]},
-  { minScore: 21, maxScore: 30, divisorSets: [[2, 3, 5]] },
+  { minScore: 11, maxScore: 20, divisorSets: [[2, 3, 5]]},
+  { minScore: 21, maxScore: 30, divisorSets: [[2, 3, 5], [7]] },
   { minScore: 31, maxScore: 40, divisorSets: [[2, 3, 5, 7]] },
   { minScore: 41, maxScore: Infinity, divisorSets: [[2, 3, 5, 7]] }
 ];
