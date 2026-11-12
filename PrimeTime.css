@@ -126,6 +126,11 @@
   font-weight: bold;
   z-index: 1; }
 
+#bullet,
+.number {
+  visibility: hidden;
+}
+
 #bullet.rainbow-bullet {
   font-size: 24px;
 }
