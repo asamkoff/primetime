@@ -799,6 +799,10 @@ Number.prototype = {
   veryActiveColor: "#ff0000", // danger colour when it has to be shot before it hits bottom
   activeColor: "#eaff70", // colour when normal (coming down, will kill gun if it collides with gun)
   inactiveColor: "#d0d0d0", // colour when has been "killed" by reduction to 1
+  frozenColor: "#9de7ff",
+  hyperactivatedFrozenColor: "#145da0",
+  frozenTextColor: "#073b4c",
+  hyperactivatedFrozenTextColor: "#ffffff",
   numActive: 0, // number of active Number's
   
   /** Initialise at start of game */
@@ -843,6 +847,7 @@ Number.prototype = {
       else {
         this.view.classList.remove("frozen");
       }
+      this.updateFreezeAppearance();
       this.value = randomNumberForDifficulty(
         this.maxValue,
         this.game.difficultyLevel.divisorSets
@@ -904,7 +909,21 @@ Number.prototype = {
   setVeryActive: function() {
     this.veryActive = true;
     this.view.classList.add("hyperactivated");
-    this.view.style.backgroundColor = this.veryActiveColor;
+    this.updateFreezeAppearance();
+  },
+
+  updateFreezeAppearance: function() {
+    if (this.view.classList.contains("frozen")) {
+      this.view.style.backgroundColor = this.veryActive ?
+        this.hyperactivatedFrozenColor : this.frozenColor;
+      this.view.style.color = this.veryActive ?
+        this.hyperactivatedFrozenTextColor : this.frozenTextColor;
+    }
+    else {
+      this.view.style.backgroundColor = this.timeToDie ? this.inactiveColor :
+        (this.veryActive ? this.veryActiveColor : this.activeColor);
+      this.view.style.color = "";
+    }
   },
   
   /** Set inactive */
@@ -1446,7 +1465,10 @@ Game.prototype = {
   activateNumberFreeze: function() {
     this.numberFreezeUntil = Date.now() + NUMBER_FREEZE_DURATION_MS;
     for (var i = 0; i < this.numbers.length; i++) {
-      if (this.numbers[i].active) this.numbers[i].view.classList.add("frozen");
+      if (this.numbers[i].active) {
+        this.numbers[i].view.classList.add("frozen");
+        this.numbers[i].updateFreezeAppearance();
+      }
     }
     this.freezePowerup.startTickTock();
   },
@@ -1461,6 +1483,7 @@ Game.prototype = {
     this.numberFreezeUntil = 0;
     for (var i = 0; this.numbers && i < this.numbers.length; i++) {
       this.numbers[i].view.classList.remove("frozen");
+      this.numbers[i].updateFreezeAppearance();
     }
     if (this.freezePowerup) this.freezePowerup.stopTickTock();
   },

@@ -161,13 +161,11 @@
   border: solid 1px; }
 
 .number.frozen {
-  background-color: #145da0 !important;
-  color: #ffffff;
+  color: #073b4c;
 }
 
 .number.frozen.hyperactivated {
-  background-color: #9de7ff !important;
-  color: #073b4c;
+  color: #ffffff;
 }
 
 .boss {

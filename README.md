@@ -15,7 +15,7 @@ instantly defeat any number or boss. The transformation lasts 6 seconds; adjust
 `CAT_TRANSFORMATION_DURATION_MS` in `PrimeTime.js` to change its duration.
 
 Collect the falling snowflake (❄️) to freeze the falling numbers for 6 seconds.
-Frozen numbers remain shootable and appear dark blue, or light blue when
+Frozen numbers remain shootable and appear light blue, or dark blue when
 hyperactivated. A tick-tock sound plays while they are frozen.
 
 ## Versioning and deployment
