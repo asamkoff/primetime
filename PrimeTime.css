@@ -96,6 +96,14 @@
   line-height: 1;
 }
 
+#freezePowerup {
+  position: absolute;
+  top: 0;
+  display: none;
+  font-size: 32px;
+  line-height: 1;
+}
+
 #spareGuns {
   /* Player's spare guns (bottom right) */
   position: absolute;
@@ -151,6 +159,16 @@
   background-color: #ff4040;
   z-index: 0;
   border: solid 1px; }
+
+.number.frozen {
+  background-color: #145da0 !important;
+  color: #ffffff;
+}
+
+.number.frozen.hyperactivated {
+  background-color: #9de7ff !important;
+  color: #073b4c;
+}
 
 .boss {
   box-sizing: border-box;

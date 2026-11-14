@@ -14,6 +14,10 @@ Collect the falling cat to transform the gun and fire rainbow shots that
 instantly defeat any number or boss. The transformation lasts 6 seconds; adjust
 `CAT_TRANSFORMATION_DURATION_MS` in `PrimeTime.js` to change its duration.
 
+Collect the falling snowflake (❄️) to freeze the falling numbers for 6 seconds.
+Frozen numbers remain shootable and appear dark blue, or light blue when
+hyperactivated. A tick-tock sound plays while they are frozen.
+
 ## Versioning and deployment
 
 Pushes to `main` are versioned and deployed to GitHub Pages by

@@ -14,6 +14,7 @@ var SPAM_COUNTER_RESET_INTERVAL_MS = 6000;
 var SPAM_ALERT_DURATION_MS = 6000;
 var SPAM_ALERT_FLASH_INTERVAL_MS = 1000;
 var CAT_TRANSFORMATION_DURATION_MS = 6000;
+var NUMBER_FREEZE_DURATION_MS = 6000;
 
 //================================================================================
 
@@ -58,6 +59,10 @@ function collided (element1, element2) {
 /** Return true with probability prob. */
 function withProbability (prob) {
   return Math.random() < prob;
+}
+
+function isGamePageVisible(game) {
+  return !game.controller || !game.controller.document.hidden;
 }
 
 /** Height of the game in pixels */
@@ -361,7 +366,7 @@ Hamburger.prototype = {
     var delay = 19000 + Math.random() * 3000;
     this.timer = window.setTimeout(function() {
       hamburger.timer = null;
-      hamburger.spawn();
+      if (isGamePageVisible(hamburger.game)) hamburger.spawn();
       hamburger.start();
     }, delay);
   },
@@ -427,7 +432,7 @@ CatPowerup.prototype = {
     var delay = 22000 + Math.random() * 4000;
     this.timer = window.setTimeout(function() {
       catPowerup.timer = null;
-      catPowerup.spawn();
+      if (isGamePageVisible(catPowerup.game)) catPowerup.spawn();
       catPowerup.start();
     }, delay);
   },
@@ -470,6 +475,149 @@ CatPowerup.prototype = {
   }
 };
 
+function getFreezePowerupView(document) {
+  var view = document.getElementById("freezePowerup");
+  if (!view) {
+    var gameView = document.getElementById("game");
+    if (!gameView) {
+      throw new Error("Cannot create freeze power-up: missing #game element.");
+    }
+
+    view = document.createElement("div");
+    view.id = "freezePowerup";
+    view.setAttribute("aria-hidden", "true");
+    view.textContent = "\u2744\uFE0F";
+    gameView.appendChild(view);
+    console.warn("Missing #freezePowerup in page markup; created it dynamically.");
+  }
+
+  view.style.position = "absolute";
+  view.style.top = "0";
+  view.style.display = "none";
+  view.style.fontSize = "32px";
+  view.style.lineHeight = "1";
+  return view;
+}
+
+function FreezePowerup(view, game) {
+  this.view = view;
+  this.game = game;
+  this.timer = null;
+  this.active = false;
+  this.audioContext = null;
+  this.audioContextConstructor = window.AudioContext || window.webkitAudioContext;
+  this.tickInterval = null;
+  this.tickIndex = 0;
+}
+
+FreezePowerup.prototype = {
+  step: 2,
+
+  start: function() {
+    if (this.timer !== null) return;
+    var powerup = this;
+    var delay = 22000 + Math.random() * 4000;
+    this.timer = window.setTimeout(function() {
+      powerup.timer = null;
+      if (isGamePageVisible(powerup.game)) powerup.spawn();
+      powerup.start();
+    }, delay);
+  },
+
+  stop: function() {
+    if (this.timer !== null) {
+      window.clearTimeout(this.timer);
+      this.timer = null;
+    }
+    this.hide();
+    this.stopTickTock();
+  },
+
+  spawn: function() {
+    this.active = true;
+    this.Y = 540;
+    setLeft(this.view, Math.floor(Math.random() * 760));
+    setYPos(this.view, this.Y);
+    this.view.style.display = "block";
+  },
+
+  hide: function() {
+    this.active = false;
+    this.view.style.display = "none";
+  },
+
+  update: function() {
+    if (!this.active || this.game.suspended) return;
+
+    this.Y -= this.step;
+    if (this.Y < 0) {
+      this.hide();
+      return;
+    }
+    setYPos(this.view, this.Y);
+
+    if (collided(this.view, this.game.gun.view)) {
+      this.game.activateNumberFreeze();
+      this.hide();
+    }
+  },
+
+  startTickTock: function() {
+    if (!this.audioContextConstructor) {
+      console.warn("Tick-tock sound is not supported by this browser.");
+      return;
+    }
+    if (!this.audioContext) {
+      this.audioContext = new this.audioContextConstructor();
+    }
+
+    var powerup = this;
+    function tick() {
+      if (!powerup.game.isNumbersFrozen() || !isGamePageVisible(powerup.game)) return;
+
+      var now = powerup.audioContext.currentTime;
+      var oscillator = powerup.audioContext.createOscillator();
+      var gain = powerup.audioContext.createGain();
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(powerup.tickIndex % 2 === 0 ? 880 : 660, now);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      oscillator.connect(gain);
+      gain.connect(powerup.audioContext.destination);
+      oscillator.onended = function() {
+        oscillator.disconnect();
+        gain.disconnect();
+      };
+      oscillator.start(now);
+      oscillator.stop(now + 0.06);
+      powerup.tickIndex++;
+    }
+
+    function startTicks() {
+      if (!powerup.game.isNumbersFrozen() || !isGamePageVisible(powerup.game) ||
+          powerup.tickInterval !== null) return;
+      tick();
+      powerup.tickInterval = window.setInterval(tick, 500);
+    }
+
+    if (this.audioContext.state === "suspended") {
+      this.audioContext.resume().then(startTicks, function(error) {
+        console.error("Could not start tick-tock sound:", error);
+      });
+    }
+    else {
+      startTicks();
+    }
+  },
+
+  stopTickTock: function() {
+    if (this.tickInterval !== null) {
+      window.clearInterval(this.tickInterval);
+      this.tickInterval = null;
+    }
+  }
+};
+
 var HORSE_GALLOP_FADE_DELAY_MS = 2500;
 var HORSE_GALLOP_FADE_DURATION_MS = 4000;
 
@@ -498,7 +646,7 @@ Horse.prototype = {
     var delay = 12000 + Math.random() * 3000;
     this.timer = window.setTimeout(function() {
       horse.timer = null;
-      horse.spawn();
+      if (isGamePageVisible(horse.game)) horse.spawn();
       horse.start();
     }, delay);
   },
@@ -590,6 +738,14 @@ Horse.prototype = {
     this.view.style.display = "none";
   },
 
+  pauseGallopingSound: function() {
+    this.gallopingSound.pause();
+    if (this.gallopingPlayingHandler) {
+      this.gallopingSound.removeEventListener("playing", this.gallopingPlayingHandler);
+      this.gallopingPlayingHandler = null;
+    }
+  },
+
   update: function() {
     if (!this.active || this.game.suspended) return;
 
@@ -677,9 +833,16 @@ Number.prototype = {
     if (!this.overlaps()) {
       this.active = true;
       this.veryActive = false;
+      this.view.classList.remove("hyperactivated");
       this.view.style.backgroundColor = this.activeColor;
       this.timeToDie = null;
       this.hitPauseUntil = 0;
+      if (this.game && this.game.isNumbersFrozen()) {
+        this.view.classList.add("frozen");
+      }
+      else {
+        this.view.classList.remove("frozen");
+      }
       this.value = randomNumberForDifficulty(
         this.maxValue,
         this.game.difficultyLevel.divisorSets
@@ -692,6 +855,16 @@ Number.prototype = {
   /** Update Number for one game loop */
   update: function(bullet, gun) {
     if (this.active) {
+      if (this.game.isNumbersFrozen()) {
+        if (this.timeToDie) return;
+        if (bullet.collidedWithNumber(this)) {
+          bullet.maybeHitTarget(this);
+        }
+        else if (collided(this.view, gun.view)) {
+          this.game.gunDied("The number " + this.value + " collided with you", this);
+        }
+        return;
+      }
       if (this.timeToDie) { // if it's dying, one more step until death
         this.timeToDie -= 1;
         if (this.timeToDie == 0) {
@@ -730,12 +903,15 @@ Number.prototype = {
   /** Set "very active" (kills gun when it hits bottom, so gun has to kill it in that descent) */
   setVeryActive: function() {
     this.veryActive = true;
+    this.view.classList.add("hyperactivated");
     this.view.style.backgroundColor = this.veryActiveColor;
   },
   
   /** Set inactive */
   deactivate: function() {
     this.active = false;
+    this.view.classList.remove("frozen");
+    this.view.classList.remove("hyperactivated");
     this.view.style.visibility = "hidden";
     this.numActive--; // keep count of number of active guns
   },
@@ -1104,6 +1280,7 @@ function Game (document) {
   this.spareGuns = new SpareGuns (document.getElementById ("spareGuns"));
   this.hamburger = new Hamburger(document.getElementById("hamburger"), this);
   this.catPowerup = new CatPowerup(document.getElementById("catPowerup"), this);
+  this.freezePowerup = new FreezePowerup(getFreezePowerupView(document), this);
   this.horse = new Horse(document.getElementById("horse"), this);
   
   this.init();
@@ -1126,6 +1303,7 @@ Game.prototype = {
   
   /** Initialise game */
   init: function() {
+    this.clearNumberFreeze();
     this.bossQueue = 0;
     this.catTransformationUntil = 0;
     this.gun.setCatTransformed(false);
@@ -1260,6 +1438,32 @@ Game.prototype = {
       this.gun.setCatTransformed(false);
     }
   },
+
+  isNumbersFrozen: function() {
+    return this.numberFreezeUntil > Date.now();
+  },
+
+  activateNumberFreeze: function() {
+    this.numberFreezeUntil = Date.now() + NUMBER_FREEZE_DURATION_MS;
+    for (var i = 0; i < this.numbers.length; i++) {
+      if (this.numbers[i].active) this.numbers[i].view.classList.add("frozen");
+    }
+    this.freezePowerup.startTickTock();
+  },
+
+  updateNumberFreeze: function() {
+    if (this.numberFreezeUntil && !this.isNumbersFrozen()) {
+      this.clearNumberFreeze();
+    }
+  },
+
+  clearNumberFreeze: function() {
+    this.numberFreezeUntil = 0;
+    for (var i = 0; this.numbers && i < this.numbers.length; i++) {
+      this.numbers[i].view.classList.remove("frozen");
+    }
+    if (this.freezePowerup) this.freezePowerup.stopTickTock();
+  },
   
   /** Response to key press, either a prime bullet or a "P" bullet, or none */
   keyPress: function (key) {
@@ -1324,8 +1528,10 @@ Game.prototype = {
   update: function() {
     this.hamburger.update();
     this.catPowerup.update();
+    this.freezePowerup.update();
     this.horse.update();
     this.updateCatTransformation();
+    this.updateNumberFreeze();
     if (this.suspended) {
       this.suspendCount--; // count down until suspension finishes
       if (this.suspendCount <= 0) {
@@ -1452,6 +1658,7 @@ GameController.prototype = {
     this.game.restart();
     this.game.hamburger.start();
     this.game.catPowerup.start();
+    this.game.freezePowerup.start();
     this.game.horse.start();
     this.finished = false;
     this.startLoop();
@@ -1498,6 +1705,7 @@ GameController.prototype = {
     game.controller = controller;
     game.hamburger.start();
     game.catPowerup.start();
+    game.freezePowerup.start();
     game.horse.start();
     
     this.document.addEventListener("keydown", function(event) {
@@ -1524,6 +1732,14 @@ GameController.prototype = {
     this.document.addEventListener("visibilitychange", function() {
       controller.lastFrameTime = null;
       controller.accumulator = 0;
+      if (controller.document.hidden) {
+        game.horse.pauseGallopingSound();
+        game.freezePowerup.stopTickTock();
+      }
+      else {
+        if (game.horse.active) game.horse.playGallopingSound();
+        if (game.isNumbersFrozen()) game.freezePowerup.startTickTock();
+      }
     });
     // and then start the game loop running ...
     this.startLoop();
@@ -1534,6 +1750,8 @@ GameController.prototype = {
     this.finished = true;
     this.game.hamburger.stop();
     this.game.catPowerup.stop();
+    this.game.freezePowerup.stop();
+    this.game.clearNumberFreeze();
     this.game.horse.stop();
     if (this.frameHandle !== null) {
       cancelAnimationFrame(this.frameHandle);
