@@ -636,7 +636,7 @@ function Number(view, index, allNumbers) {
 Number.prototype = {
   maxPos: 540, // top position where number starts from when coming down
   step: 1, // size of step each game loop when descending
-  maxValue: 100, // current maximum values of number values (which rises as points increase)
+  maxValue: 50, // current maximum values of number values (which rises as points increase)
   maxMaxValue: 500, // maximum possible maximum value (since 23*23 = 529 can't be shot at).
   width: 100, // width of view div
   height: 30, // height of view div
@@ -932,8 +932,8 @@ function randomNumberForDifficulty(maxValue, divisorSets) {
 var difficultyLevels = [
   { minScore: 0, maxScore: 5, divisorSets: [[2]] },
   { minScore: 6, maxScore: 10, divisorSets: [[2, 3, 5]] },
-  { minScore: 11, maxScore: 20, divisorSets: [[2, 3, 5], [7]]},
-  { minScore: 21, maxScore: 30, divisorSets: [[2, 3, 5, 7]] },
+  { minScore: 11, maxScore: 20, divisorSets: [[2, 3, 5]]},
+  { minScore: 21, maxScore: 30, divisorSets: [[2, 3, 5], [7]] },
   { minScore: 31, maxScore: 40, divisorSets: [[2, 3, 5, 7]] },
   { minScore: 41, maxScore: Infinity, divisorSets: [[2, 3, 5, 7]] }
 ];
