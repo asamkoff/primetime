@@ -792,7 +792,7 @@ function Number(view, index, allNumbers) {
 Number.prototype = {
   maxPos: 540, // top position where number starts from when coming down
   step: 1, // size of step each game loop when descending
-  maxValue: 50, // current maximum values of number values (which rises as points increase)
+  maxValue: 50, // initial maximum number value (increases with score)
   maxMaxValue: 500, // maximum possible maximum value (since 23*23 = 529 can't be shot at).
   width: 100, // width of view div
   height: 30, // height of view div
@@ -1074,11 +1074,11 @@ function initPrimesForKey() {
   };
 }
 
-/** The maximum value for Number's as a function of current score:
- * starts at 100, stays same until score is 50, then increases up to maximum (of 500) 
+/** The maximum value for Numbers as a function of current score:
+ * starts at 50, stays there until score exceeds 25, then rises to 475.
  **/
 function maxValueFromScore (score) {
-  var value= Math.min (Number.prototype.maxMaxValue, Math.max (score + 50, 100));
+  var value= Math.min (Number.prototype.maxMaxValue, Math.max (score + 25, 50));
   return value;
 }
 
@@ -1113,16 +1113,6 @@ function randomNumberForDifficulty(maxValue, divisorSets) {
   }
   return values[Math.floor(Math.random() * values.length)];
 }
-
-/*var difficultyLevels = [
-  { minScore: 0, maxScore: 5, divisorSets: [[2]] },
-  { minScore: 6, maxScore: 10, divisorSets: [[5]] },
-  { minScore: 11, maxScore: 20, divisorSets: [[2], [5]]},
-  { minScore: 21, maxScore: 30, divisorSets: [[2, 5]] },
-  { minScore: 31, maxScore: 40, divisorSets: [[2, 3, 5]] },
-  { minScore: 41, maxScore: Infinity, divisorSets: [[2, 3,5]] }
-];
-*/
 
 var difficultyLevels = [
   { minScore: 0, maxScore: 5, divisorSets: [[2]] },
@@ -1348,7 +1338,7 @@ Game.prototype = {
     this.bullet.clear();
     this.bullet.penaltyUntil = 0;
     this.gun.setLoaded(true);
-    this.score = 0; //0; comment for starting with a high score for testing
+    this.score = 0;
     this.difficultyLevel = difficultyLevelForScore(this.score);
     try {
       this.highScoreValue = localStorage.primeTimeHighScore;
