@@ -887,25 +887,36 @@ function maxValueFromScore (score) {
   return value;
 }
 
-function randomNumberWithDivisors(maxValue, allowedDivisors) {
-  var values = [];
-
-  function addValues(base, divisorIndex) {
-    if (divisorIndex >= allowedDivisors.length) return;
-    var divisor = allowedDivisors[divisorIndex];
-    for (var value = base * divisor; value <= maxValue; value *= divisor) {
-      values.push(value);
-      addValues(value, divisorIndex + 1);
+function hasOnlyAllowedDivisors(value, allowedDivisors) {
+  for (var i = 0; i < allowedDivisors.length; i++) {
+    var divisor = allowedDivisors[i];
+    while (value % divisor == 0) {
+      value /= divisor;
     }
   }
 
-  addValues(1, 0);
-  return values[Math.floor(Math.random() * values.length)];
+  return value == 1;
+}
+
+function numbersWithAllowedDivisors(maxValue, divisorSets) {
+  var values = [];
+  for (var value = 2; value <= maxValue; value++) {
+    for (var i = 0; i < divisorSets.length; i++) {
+      if (hasOnlyAllowedDivisors(value, divisorSets[i])) {
+        values.push(value);
+        break;
+      }
+    }
+  }
+  return values;
 }
 
 function randomNumberForDifficulty(maxValue, divisorSets) {
-  var divisors = divisorSets[Math.floor(Math.random() * divisorSets.length)];
-  return randomNumberWithDivisors(maxValue, divisors);
+  var values = numbersWithAllowedDivisors(maxValue, divisorSets);
+  if (values.length == 0) {
+    throw new Error("No numbers available for maxValue " + maxValue);
+  }
+  return values[Math.floor(Math.random() * values.length)];
 }
 
 /*var difficultyLevels = [
@@ -920,9 +931,9 @@ function randomNumberForDifficulty(maxValue, divisorSets) {
 
 var difficultyLevels = [
   { minScore: 0, maxScore: 5, divisorSets: [[2]] },
-  { minScore: 6, maxScore: 10, divisorSets: [[2, 5]] },
-  { minScore: 11, maxScore: 20, divisorSets: [[2, 3, 5]]},
-  { minScore: 21, maxScore: 30, divisorSets: [[2, 3, 5], [7]] },
+  { minScore: 6, maxScore: 10, divisorSets: [[2, 3, 5]] },
+  { minScore: 11, maxScore: 20, divisorSets: [[2, 3, 5], [7]]},
+  { minScore: 21, maxScore: 30, divisorSets: [[2, 3, 5, 7]] },
   { minScore: 31, maxScore: 40, divisorSets: [[2, 3, 5, 7]] },
   { minScore: 41, maxScore: Infinity, divisorSets: [[2, 3, 5, 7]] }
 ];
