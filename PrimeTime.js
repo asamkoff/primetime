@@ -421,6 +421,14 @@ function CatPowerup(view, game) {
   this.game = game;
   this.timer = null;
   this.active = false;
+  this.meowSounds = [
+    new Audio("sounds/meow/meow1.mp3"),
+    new Audio("sounds/meow/meow2.mp3"),
+    new Audio("sounds/meow/meow3.mp3"),
+    new Audio("sounds/meow/meow4.mp3"),
+    new Audio("sounds/meow/meow5.mp3"),
+    new Audio("sounds/meow/meow6.mp3")
+  ];
 }
 
 CatPowerup.prototype = {
@@ -458,6 +466,17 @@ CatPowerup.prototype = {
     this.view.style.display = "none";
   },
 
+  playMeow: function() {
+    var sound = this.meowSounds[Math.floor(Math.random() * this.meowSounds.length)];
+    sound.currentTime = 0;
+    var playPromise = sound.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(function(error) {
+        console.error("Could not play cat meow sound:", error);
+      });
+    }
+  },
+
   update: function() {
     if (!this.active || this.game.suspended) return;
 
@@ -470,6 +489,7 @@ CatPowerup.prototype = {
 
     if (collided(this.view, this.game.gun.view)) {
       this.game.activateCatTransformation();
+      this.playMeow();
       this.hide();
     }
   }
